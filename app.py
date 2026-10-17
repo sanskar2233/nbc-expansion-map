@@ -2,16 +2,17 @@ import streamlit as st
 import folium
 from streamlit_folium import st_folium
 import pandas as pd
+
 st.set_page_config(page_title="NBC Expansion Engine", layout="wide")
 
 st.title("☕ Nothing Before Coffee — Expansion Map")
 st.write("Click on any store pin or catchment circle to inspect the location.")
 
 # Center map on Jaipur
-m = folium.Map(location=[26.9124, 75.7873], zoom_start=12, )
+m = folium.Map(location=[26.9124, 75.7873], zoom_start=12)
 
 # Sample NBC Outlets
-df = pd.read_csv("Delhi NCR Coffee Chains Store Locations - ALL Brands Data.csv")
+df = pd.read_csv("Delhi NCR Coffee Chains Store Locations - All Brands Data.csv")
 nbc_stores = df.to_dict('records')
 
 # Sample Competitor Cafes
@@ -25,7 +26,7 @@ for store in nbc_stores:
     lat = store.get("Latitude") or store.get("lat")
     lon = store.get("Longitude") or store.get("lon")
     name = store.get("Store_Name") or store.get("name") or "NBC Store"
-    
+
     if pd.notna(lat) and pd.notna(lon):
         folium.Circle(
             location=[lat, lon],
@@ -38,14 +39,18 @@ for store in nbc_stores:
 
         folium.Marker(
             location=[lat, lon],
-            popup=f"NBC Store: {name}",
+            popup=f"<b>NBC Store: {name}</b>",
             tooltip=name,
-            icon=folium.Icon(color="darkred", icon="coffee", prefix="fa")
+            icon=folium.Icon(color='darkred', icon='coffee', prefix='fa')
         ).add_to(m)
+
+# 2. Plot Competitors
+for comp in competitors:
+    folium.Marker(
         location=[comp["lat"], comp["lon"]],
         popup=f"<b>{comp['name']}</b>",
         tooltip="Competitor",
-        icon=folium.Icon(color="blue", icon="cutlery", prefix="fa")
+        icon=folium.Icon(color='blue', icon='cutlery', prefix='fa')
     ).add_to(m)
 
 st_folium(m, width=1100, height=600)
