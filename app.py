@@ -174,43 +174,37 @@ if st.session_state.logged_in:
     </div>
     """, unsafe_allow_html=True)
 
-    col_f, col_t = st.columns([1.5, 3.5])
-    with col_f:
-        st.image(
-            "https://raw.githubusercontent.com/sanskar2233/nbc-expansion-map/main/WhatsApp%20Image%202026-10-18%20at%204.16.48%20AM.jpeg", 
-            caption="Founders | Nothing Before Coffee", 
-            use_container_width=True
-        )
-    with col_t:
-        st.markdown('<div class="team-header">🚀 BUSINESS DEVELOPMENT & EXPANSION TEAM</div>', unsafe_allow_html=True)
-        
-        t_col1, t_col2 = st.columns(2)
-        
-        with t_col1:
-            with st.expander("Vipin Singh Shekhawat (BD Manager)"):
-                st.image("https://raw.githubusercontent.com/sanskar2233/nbc-expansion-map/main/WhatsApp%20Image%202026-10-18%20at%204.16.48%20AM.jpeg", width=160)
-                st.write("**Vipin Singh Shekhawat** — BD Manager")
+    # Team Section with Stacked Layout (Vipin -> Mayank, Manoj -> Sanskar)
+    st.markdown('<div class="team-header">🚀 BUSINESS DEVELOPMENT & EXPANSION TEAM</div>', unsafe_allow_html=True)
+    t_col1, t_col2 = st.columns(2)
+    
+    with t_col1:
+        with st.expander("Vipin Singh Shekhawat (BD Manager)"):
+            st.image("https://raw.githubusercontent.com/sanskar2233/nbc-expansion-map/main/WhatsApp%20Image%202026-10-18%20at%204.16.48%20AM.jpeg", width=160)
+            st.write("**Vipin Singh Shekhawat** — BD Manager")
             
-            with st.expander("Mayank Iktiyan (BD & Expansion)"):
-                st.image("https://media.licdn.com/dms/image/v2/D5603AQHzm90d5J6g-dE/profile-displayphoto-scale_200_200/B56ZkZlJVgH4-Ae-1793836800&e=1793836800&v=beta&t=TttJlmFD5QAWQwD0o63w1pw", width=160)
-                st.write("**Mayank Iktiyan** — BD & Expansion")
-                
-        with t_col2:
-            with st.expander("Manoj Singh (BD Manager)"):
-                st.write("**Manoj Singh** — BD Manager")
+        with st.expander("Mayank Iktiyan (BD & Expansion)"):
+            st.image("https://media.licdn.com/dms/image/v2/D5603AQHzm90d5J6g-dE/profile-displayphoto-scale_200_200/B56ZkZlJVgH4-Ae-1793836800&e=1793836800&v=beta&t=TttJlmFD5QAWQwD0o63w1pw", width=160)
+            st.write("**Mayank Iktiyan** — BD & Expansion")
             
-            with st.expander("Sanskar Singh Yadav (BD & Expansion)"):
-                st.image("https://media.licdn.com/dms/image/v2/D5603AQHzm90d5J6g-dE/profile-displayphoto-crop_800_800/B56Z3eEcl_2iS6jg-dE/profile-displayphoto-crop_800_800/B56Z3eEcl_2iS6j-dE/0/1793836800800?e=1793836800&v=beta&t=TttJlmFD5QAWQwD0o63w1pw", width=160)
-                st.write("**Sanskar Singh Yadav** — BD & Expansion")
+    with t_col2:
+        with st.expander("Manoj Singh (BD Manager)"):
+            st.write("**Manoj Singh** — BD Manager")
+            
+        with st.expander("Sanskar Singh Yadav (BD & Expansion)"):
+            st.image("https://media.licdn.com/dms/image/v2/D5603AQHzm90d5J6g-dE/profile-displayphoto-crop_800_800/B56Z3eEcl_2iS6jg-dE/profile-displayphoto-crop_800_800/B56Z3eEcl_2iS6j-dE/0/1793836800800?e=1793836800&v=beta&t=TttJlmFD5QAWQwD0o63w1pw", width=160)
+            st.write("**Sanskar Singh Yadav** — BD & Expansion")
 
     st.markdown("<hr style='border-color: rgba(255,255,255,0.25);'>", unsafe_allow_html=True)
+
+    # Cartoon Mascots & Stats Row
     c_left, s1, s2, s3, s4, c_right = st.columns([1.2, 1, 1, 1.2, 1.2, 1.2])
     with c_left:
         st.image("https://nothingbeforecoffee.com/wp-content/themes/damnperfect/assets/images/hero-left.webp", width=130)
     with s1:
         st.markdown('<div class="stat-num-red">110+</div><div class="stat-label-red">OUTLETS</div>', unsafe_allow_html=True)
     with s2:
-        st.markdown('<div class="stat-num-red">20</div><div class="stat-label-red">CITIES</div>', unsafe_allow_html=True)
+        st.markdown('<div class="stat-num-red">15+</div><div class="stat-label-red">CITIES</div>', unsafe_allow_html=True)
     with s3:
         st.markdown('<div class="stat-num-red">1,00,000+</div><div class="stat-label-red">CUPS SERVED</div>', unsafe_allow_html=True)
     with s4:
@@ -218,6 +212,7 @@ if st.session_state.logged_in:
     with c_right:
         st.image("https://nothingbeforecoffee.com/wp-content/themes/damnperfect/assets/images/hero-right.webp", width=130)
 
+    # Blue Wave Section
     st.markdown("""
     <div class="blue-wave-section">
         <div class="stay-unfiltered-badge">STAY UNFILTERED</div>
@@ -263,13 +258,23 @@ if st.session_state.logged_in:
     try:
         df = load_and_process_data()
         if df is None or df.empty:
-            st.warning("Data files nahi mil payi.")
+            st.warning("Data files load nahi ho paayi. Kripya GitHub repository mein CSV/Excel file names check karein.")
         else:
             lat_col = next((c for c in df.columns if c.strip().lower() in ['latitude', 'lat']), None)
             lon_col = next((c for c in df.columns if c.strip().lower() in ['longitude', 'lon', 'long']), None)
             addr_col = next((c for c in df.columns if 'address' in c.strip().lower() or 'location' in c.strip().lower()), None)
             name_col = next((c for c in df.columns if 'name' in c.strip().lower() or 'store' in c.strip().lower() or 'brand' in c.strip().lower()), None)
-            
+            city_col = next((c for c in df.columns if 'city' in c.strip().lower() or 'location' in c.strip().lower()), None)
+
+            if not lat_col or not lon_col:
+                if addr_col:
+                    st.info("Fetching coordinates from addresses...")
+                    coords = df[addr_col].head(50).apply(get_coordinates)
+                    df = df.head(50).copy()
+                    df['Latitude'] = [c[0] for c in coords]
+                    df['Longitude'] = [c[1] for c in coords]
+                    lat_col, lon_col = 'Latitude', 'Longitude'
+
             if lat_col and lon_col:
                 df[lat_col] = pd.to_numeric(df[lat_col], errors='coerce')
                 df[lon_col] = pd.to_numeric(df[lon_col], errors='coerce')
@@ -293,7 +298,7 @@ if st.session_state.logged_in:
 
                 st_folium(m, width=1200, height=550)
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"Error loading CSV/Map data: {e}")
 
 else:
     st.markdown("""
