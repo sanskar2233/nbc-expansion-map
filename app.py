@@ -5,86 +5,99 @@ import pandas as pd
 
 st.set_page_config(page_title="NBC Expansion Engine", layout="wide")
 
-st.title("Nothing Before Coffee (NBC) - Expansion")
-st.subheader("Business Development Next 1000 Stores Catchment Strategy")
-st.write("Click on any store pin or catchment circle to inspect the location.")
+# Custom UI Styling
+st.markdown("""
+    <style>
+    .main-title { font-size: 32px; font-weight: bold; color: #1E272C; margin-bottom: 2px; }
+    .sub-title { font-size: 16px; color: #607D8B; margin-bottom: 15px; }
+    </style>
+""", unsafe_allow_html=True)
 
-# Center map on Gurugram/Delhi NCR region using OpenStreetMap (No API Key Required)
-m = folium.Map(location=[28.4595, 77.0266], zoom_start=11, tiles="OpenStreetMap")
+# --- Sidebar: Brand Logo, Phase Filters & Layers ---
+with st.sidebar:
+    # NBC Logo - Direct image path ya URL replace karein
+    st.image(
+        "https://raw.githubusercontent.com/FortAwesome/Font-Awesome/master/svgs/solid/mug-hot.svg", 
+        width=70, 
+        caption="Nothing Before Coffee"
+    )
+    st.markdown("### Expansion Deck Controls")
+    
+    # Phase Breakdown Filters
+    phase_options = {
+        "Phase 1 (Initial 150 Pipeline)": 150,
+        "Phase 2 (Target 250 - Addl. 100)": 250,
+        "Phase 3 (Target 500 - Addl. 250)": 500,
+        "Phase 4 (Target 750 - Addl. 250)": 750,
+        "Phase 5 (Target 1000 Stores)": 1000
+    }
+    selected_phase = st.selectbox(
+        "Select Expansion Milestone",
+        list(phase_options.keys()),
+        index=0
+    )
+    store_limit = phase_options[selected_phase]
+    
+    # Competitor Layer Toggle
+    show_competitors = st.checkbox("Show Competitor Intelligence & Revenue", value=True)
+    show_catchment = st.checkbox("Show 1 KM Catchment Buffers", value=True)
 
-# Read CSV with encoding and bad lines handling
-try:
-    df = pd.read_csv("Delhi NCR Coffee Chains Store Locations - ALL Brands Data.csv", encoding="latin1", on_bad_lines='skip')
-    nbc_stores = df.to_dict('records')
-except Exception as e:
-    st.error(f"Error loading CSV file: {e}")
-    nbc_stores = []
+st.markdown("<div class='main-title'>Nothing Before Coffee (NBC) - Expansion Strategy</div>", unsafe_allow_html=True)
+st.markdown(f"<div class='sub-title'>Visualizing <b>{selected_phase}</b> | Next 1000 Stores Catchment Analysis</div>", unsafe_allow_html=True)
 
-# Competitor Cafes and Brands
-competitors = [
-    {"name": "Starbucks Store", "lat": 28.5355, "lon": 77.3910, "brand": "Starbucks"},
-    {"name": "Blue Tokai Store", "lat": 28.4595, "lon": 77.0266, "brand": "Blue Tokai"},
-    {"name": "Third Wave Coffee", "lat": 28.5355, "lon": 77.3910, "brand": "Third Wave"},
-    {"name": "Zudio Outlet", "lat": 28.4595, "lon": 77.0266, "brand": "Zudio"},
-    {"name": "Lenskart Outlet", "lat": 28.5355, "lon": 77.0390, "brand": "Lenskart"},
-    {"name": "McDonald's Outlet", "lat": 28.5355, "lon": 77.1910, "brand": "McDonald's"},
-    {"name": "Domino's Pizza", "lat": 28.5355, "lon": 77.2090, "brand": "Dominos"},
-    {"name": "Costa Coffee", "lat": 28.4595, "lon": 77.0860, "brand": "Costa Coffee"},
-    {"name": "Cafe Coffee Day", "lat": 28.5355, "lon": 77.2340, "brand": "Cafe Coffee Day"},
-    {"name": "V-Mart Outlet", "lat": 28.4712, "lon": 77.0289, "brand": "V-Mart"},
-    {"name": "Love Over Coffee Outlet", "lat": 28.5218, "lon": 77.1110, "brand": "Love Over Coffee"}
-]
+# Default Map Center (Delhi NCR / North India coverage)
+m = folium.Map(location=[28.4595, 77.0266], zoom_start=10, tiles="OpenStreetMap")
 
-# 1. Plot Outlets with Blue Catchment (1 km radius)
-for store in nbc_stores:
-    lat = store.get("Latitude") or store.get("lat") or store.get("LATITUDE")
-    lon = store.get("Longitude") or store.get("lon") or store.get("LONGITUDE")
-    name = store.get("Store_Name") or store.get("Outlet_Name") or store.get("name") or "NBC Store"
+# --- Load Data from Excel/CSV ---
+@st.cache_data
+def load_data():
+    try:
+        # Agar multiple sheets wali Excel/CSV file hai toh usse read karein
+        df = pd.read_csv("Delhi NCR Coffee Chains Store Locations - ALL Brands Data.csv", encoding="latin1", on_bad_lines='skip')
+        return df
+    except Exception as e:
+        # Fallback empty dataframe
+        return pd.DataFrame()
 
-    if pd.notna(lat) and pd.notna(lon):
-        try:
-            lat = float(lat)
-            lon = float(lon)
-            folium.Circle(
-                location=[lat, lon],
-                radius=1000,
-                color="blue",
-                fill=True,
-                fill_opacity=0.15,
-                popup=f'Catchment: {name}'
-            ).add_to(m)
+df_stores = load_data()
 
-            folium.Marker(
-                location=[lat, lon],
-                popup=f'<b>NBC Store: {name}</b>',
-                tooltip=name,
-                icon=folium.Icon(color='darkred', icon='coffee', prefix='fa')
-            ).add_to(m)
-        except (ValueError, TypeError):
-            continue
+# Data plotting according to selected phase count
+if not df_stores.empty:
+    # Latitude aur Longitude columns detect karein
+    lat_col = next((c for c in df_stores.columns if c.strip().lower() in ['latitude', 'lat']), None)
+    lon_col = next((c for c in df_stores.columns if c.strip().lower() in ['longitude', 'lon', 'lng']), None)
+    name_col = next((c for c in df_stores.columns if c.strip().lower() in ['micro-market / catchment', 'micro-market', 'store_name', 'outlet_name', 'name']), None)
 
-# 2. Plot Competitors & Brands
-for comp in competitors:
-    if comp["brand"] == "V-Mart":
-        folium.Marker(
-            location=[comp['lat'], comp['lon']],
-            popup=f'<b>{comp["brand"]}: {comp["name"]}</b>',
-            tooltip=comp['name'],
-            icon=folium.Icon(color='green', icon='shopping-bag', prefix='fa')
-        ).add_to(m)
-    elif comp["brand"] == "Love Over Coffee":
-        folium.Marker(
-            location=[comp['lat'], comp['lon']],
-            popup=f'<b>{comp["brand"]}: {comp["name"]}</b>',
-            tooltip=comp['name'],
-            icon=folium.Icon(color='purple', icon='heart', prefix='fa')
-        ).add_to(m)
-    else:
-        folium.Marker(
-            location=[comp['lat'], comp['lon']],
-            popup=f'<b>{comp["brand"]}: {comp["name"]}</b>',
-            tooltip=comp['name'],
-            icon=folium.Icon(color='blue', icon='cutlery', prefix='fa')
-        ).add_to(m)
+    if lat_col and lon_col:
+        # Limit records based on phase selection
+        df_filtered = df_stores.dropna(subset=[lat_col, lon_col]).head(store_limit)
+        
+        for _, row in df_filtered.iterrows():
+            try:
+                lat = float(row[lat_col])
+                lon = float(row[lon_col])
+                store_title = str(row[name_col]) if name_col else "Proposed NBC Site"
+                
+                # Catchment Area Buffer
+                if show_catchment:
+                    folium.Circle(
+                        location=[lat, lon],
+                        radius=1000,
+                        color="#0984E3",
+                        fill=True,
+                        fill_color="#74B9FF",
+                        fill_opacity=0.18,
+                        popup=f"1 KM Catchment: {store_title}"
+                    ).add_to(m)
 
-st_folium(m, width=1100, height=600)
+                # NBC Marker
+                folium.Marker(
+                    location=[lat, lon],
+                    popup=folium.Popup(f"<b>NBC Expansion Site</b><br>{store_title}", max_width=250),
+                    tooltip=store_title,
+                    icon=folium.Icon(color='darkred', icon='coffee', prefix='fa')
+                ).add_to(m)
+            except (ValueError, TypeError):
+                continue
+
+# --- Competitors
