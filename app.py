@@ -14,7 +14,7 @@ m = folium.Map(location=[28.6139, 77.2090], zoom_start=11)
 # Read CSV with encoding and bad lines handling
 try:
     df = pd.read_csv(
-        "Delhi NCR Coffee Chains Store Locations - ALL Brands Data.csv"
+        "Delhi NCR Coffee Chains Store Locations - ALL Brands Data.csv",
         encoding="latin1",
         on_bad_lines="skip"
     )
