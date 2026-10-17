@@ -5,51 +5,65 @@ import pandas as pd
 
 st.set_page_config(page_title="NBC Expansion Engine", layout="wide")
 
-st.title("☕ Nothing Before Coffee — Expansion Map")
+st.title("Nothing Before Coffee – Expansion Map")
 st.write("Click on any store pin or catchment circle to inspect the location.")
 
-# Center map on Jaipur
-m = folium.Map(location=[26.9124, 75.7873], zoom_start=12)
+# Center map on Jaipur/Delhi
+m = folium.Map(location=[28.6139, 77.2090], zoom_start=11)
 
-# Sample NBC Outlets
-df = pd.read_csv("Delhi NCR Coffee Chains Store Locations - All Brands Data.csv")
-nbc_stores = df.to_dict('records')
+# Read CSV with encoding and bad lines handling
+try:
+    df = pd.read_csv(
+        "Delhi NCR Coffee Chains Store Locations - ALL Brands Data.csv",
+        encoding="latin1",
+        on_bad_lines="skip"
+    )
+    nbc_stores = df.to_dict('records')
+except Exception as e:
+    st.error(f"Error loading CSV file: {e}")
+    nbc_stores = []
 
-# Sample Competitor Cafes
+# Competitor Cafes
 competitors = [
-    {"name": "Competitor Cafe A", "lat": 26.9110, "lon": 75.7980},
-    {"name": "Competitor Cafe B", "lat": 26.8540, "lon": 75.8200},
+    {"name": "Competitor Cafe A", "lat": 28.5355, "lon": 77.3910},
+    {"name": "Competitor Cafe B", "lat": 28.4595, "lon": 77.0266},
 ]
 
-# 1. Plot NBC Outlets with 1km Catchments
+# 1. Plot Outlets with Catchment
 for store in nbc_stores:
-    lat = store.get("Latitude") or store.get("lat")
-    lon = store.get("Longitude") or store.get("lon")
-    name = store.get("Store_Name") or store.get("name") or "NBC Store"
+    lat = store.get("Latitude") or store.get("lat") or store.get("LATITUDE")
+    lon = store.get("Longitude") or store.get("lon") or store.get("LONGITUDE")
+    name = store.get("Store_Name") or store.get("Outlet_Name") or store.get("name") or "Store"
 
     if pd.notna(lat) and pd.notna(lon):
-        folium.Circle(
-            location=[lat, lon],
-            radius=1000,
-            color="#8F4E37",
-            fill=True,
-            fill_opacity=0.15,
-            popup=f"Catchment: {name}"
-        ).add_to(m)
+        try:
+            lat = float(lat)
+            lon = float(lon)
+            
+            folium.Circle(
+                location=[lat, lon],
+                radius=1000,
+                color="#8F4E37",
+                fill=True,
+                fill_opacity=0.15,
+                popup=f'Catchment: {name}'
+            ).add_to(m)
 
-        folium.Marker(
-            location=[lat, lon],
-            popup=f"<b>NBC Store: {name}</b>",
-            tooltip=name,
-            icon=folium.Icon(color='darkred', icon='coffee', prefix='fa')
-        ).add_to(m)
+            folium.Marker(
+                location=[lat, lon],
+                popup=f'<b>{name}</b>',
+                tooltip=str(name),
+                icon=folium.Icon(color='darkred', icon='coffee', prefix='fa')
+            ).add_to(m)
+        except (ValueError, TypeError):
+            continue
 
-# 2. Plot Competitors
+# 2. Plot Sample Competitors
 for comp in competitors:
     folium.Marker(
-        location=[comp["lat"], comp["lon"]],
-        popup=f"<b>{comp['name']}</b>",
-        tooltip="Competitor",
+        location=[comp['lat'], comp['lon']],
+        popup=f'<b>{comp["name"]}</b>',
+        tooltip=comp['name'],
         icon=folium.Icon(color='blue', icon='cutlery', prefix='fa')
     ).add_to(m)
 
