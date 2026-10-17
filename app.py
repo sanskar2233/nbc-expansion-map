@@ -8,7 +8,7 @@ import time
 
 st.set_page_config(page_title="NBC Expansion Engine | Bring on the Buzz", layout="wide")
 
-# Custom CSS for NBC Website Look (Fixed Outer Frame, Scalloped Corners, Fonts & Colors)
+# Custom CSS for NBC Website Look
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap');
@@ -96,7 +96,7 @@ div[data-testid="stExpander"] summary p {
     margin-bottom: 20px;
 }
 
-/* Blue Section Banner (ESPRESSO IS READY) */
+/* Blue Section Banner */
 .blue-wave-section {
     background-color: #0D47A1;
     color: #FFFFFF;
@@ -156,7 +156,6 @@ with st.sidebar:
         
         if st.button("Login", use_container_width=True):
             valid_users = ["sanskar@nbc", "mayank@nbc", "vipin@nbc", "manoj@nbc"]
-            # Dono passwords chalenge taaki koi error na aaye
             valid_passwords = ["NBCteam2026", "NBC_team_2026", "nbcteam2026"]
             
             if username in valid_users and password in valid_passwords:
@@ -184,7 +183,6 @@ with st.sidebar:
 
 # Main Dashboard Content
 if st.session_state.logged_in:
-    # Top White Banner
     st.markdown("""
     <div class="hero-box">
         <div class="main-title">BRING ON THE BUZZ</div>
@@ -193,7 +191,7 @@ if st.session_state.logged_in:
     </div>
     """, unsafe_allow_html=True)
 
-    # Founders & BD Team Section (Clean Clickable Expanders)
+    # Founders & BD Team Section
     col_f, col_t = st.columns([1.2, 3.8])
     with col_f:
         st.image(
@@ -232,7 +230,7 @@ if st.session_state.logged_in:
     with c_right:
         st.image("https://nothingbeforecoffee.com/wp-content/themes/damnperfect/assets/images/hero-right.webp", width=130)
 
-    # NBC Website Styled Blue Banner Section
+    # Blue Banner Section
     st.markdown("""
     <div class="blue-wave-section">
         <div class="stay-unfiltered-badge">STAY UNFILTERED</div>
@@ -322,7 +320,6 @@ if st.session_state.logged_in:
         st.error(f"Error loading CSV/Map data: {e}")
 
 else:
-    # Lock screen message before login
     st.markdown("""
     <div class="hero-box" style="margin-top: 40px;">
         <div class="main-title" style="font-size: 32px;">🔒 NBC Expansion Engine</div>
