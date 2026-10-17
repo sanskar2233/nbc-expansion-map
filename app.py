@@ -1,7 +1,7 @@
 import streamlit as st
 import folium
-from streamlit_folium import st_folium
-
+ from streamlit_folium import st_folium
+import pandas as pd
 st.set_page_config(page_title="NBC Expansion Engine", layout="wide")
 
 st.title("☕ Nothing Before Coffee — Expansion Map")
@@ -11,11 +11,9 @@ st.write("Click on any store pin or catchment circle to inspect the location.")
 m = folium.Map(location=[26.9124, 75.7873], zoom_start=12, )
 
 # Sample NBC Outlets
-nbc_stores = [
-    {"name": "NBC C-Scheme Flagship", "lat": 26.9080, "lon": 75.7950},
-    {"name": "NBC Malviya Nagar", "lat": 26.8520, "lon": 75.8150},
-    {"name": "NBC Raja Park", "lat": 26.8920, "lon": 75.8270},
-]
+nbc_stores = # Load data from CSV
+df = pd.read_csv("Delhi NCR Coffee Chains Store Locations - ALL Brands Data.csv")
+nbc_stores = df.to_dict('records')
 
 # Sample Competitor Cafes
 competitors = [
