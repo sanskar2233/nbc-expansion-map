@@ -8,112 +8,244 @@ import time
 
 st.set_page_config(page_title="NBC Expansion Engine | Bring on the Buzz", layout="wide")
 
+# Custom CSS for NBC Website Look (Fixed Outer Frame, Scalloped Corners, Fonts & Colors)
 st.markdown("""
 <style>
-/* Main Layout Styling */
-.main { background-color: #FFFFFF; font-family: 'Montserrat', sans-serif; }
-.main-title { font-size: 42px; font-weight: bold; color: #1660C7; margin-bottom: 5px; text-align: center; }
-.sub-title { font-size: 20px; color: #4A6984; margin-bottom: 25px; text-align: center; }
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap');
 
-/* Custom Wave Header Styling */
-.wave-header { 
-    background-image: linear-gradient(135deg, #CCE0FF 0%, #FFFFFF 100%);
-    padding: 40px; 
-    border-radius: 50px 50px 20px 20px; 
-    border-bottom: 5px solid #1660C7;
-    margin-bottom: 30px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+.stApp {
+    background-color: #1660C7;
+    font-family: 'Montserrat', sans-serif;
 }
 
-.metric-container { 
-    background-color: #FFFFFF; 
-    padding: 20px; 
-    border-radius: 15px; 
-    border: 2px solid #EBF2F9;
+/* White Scalloped / Rounded Card Banner */
+.hero-box {
+    background-color: #FFFFFF;
+    padding: 35px 25px;
+    border-radius: 35px;
     text-align: center;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    margin-bottom: 25px;
+    border: 4px solid #EBF2F9;
+}
+.main-title {
+    font-size: 46px;
+    font-weight: 900;
+    color: #1660C7;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+.sub-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: 15px;
+}
+.red-pill-banner {
+    background-color: #E53935;
+    color: #FFFFFF;
+    font-weight: 800;
+    font-size: 13px;
+    padding: 8px 20px;
+    border-radius: 50px;
+    display: inline-block;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+/* BD Team Section */
+.team-header {
+    color: #FFFFFF;
+    font-size: 20px;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-top: 15px;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+}
+
+/* Custom Styling for Team Expanders */
+div[data-testid="stExpander"] {
+    background-color: rgba(255, 255, 255, 0.12) !important;
+    border: 2px solid rgba(255, 255, 255, 0.7) !important;
+    border-radius: 30px !important;
+    color: #FFFFFF !important;
+    margin-bottom: 10px !important;
+}
+div[data-testid="stExpander"] summary p {
+    color: #FFFFFF !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+}
+
+/* Stats Section */
+.stat-num-red {
+    font-size: 38px;
+    font-weight: 900;
+    color: #FF3B30;
+    text-align: center;
+    line-height: 1.1;
+}
+.stat-label-red {
+    font-size: 12px;
+    font-weight: 800;
+    color: #FF3B30;
+    text-align: center;
+    text-transform: uppercase;
     margin-bottom: 20px;
 }
-.metric-value { font-size: 32px; font-weight: bold; color: #E54A4A; }
-.metric-label { font-size: 14px; font-weight: bold; color: #1660C7; text-transform: uppercase; margin-top: 5px; }
 
-.team-box { background-color: #e6f0fa; padding: 15px; border-radius: 15px; margin-top: 20px; margin-bottom: 10px; border-left: 5px solid #1660C7; }
-.stat-box { font-weight: bold; color: #1660C7; font-size: 18px; margin-bottom: 5px; }
+/* Blue Section Banner (ESPRESSO IS READY) */
+.blue-wave-section {
+    background-color: #0D47A1;
+    color: #FFFFFF;
+    padding: 35px 20px;
+    border-radius: 25px;
+    text-align: center;
+    margin: 25px 0;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+.stay-unfiltered-badge {
+    background-color: #E53935;
+    color: #FFFFFF;
+    font-weight: 800;
+    padding: 5px 16px;
+    border-radius: 6px;
+    display: inline-block;
+    transform: rotate(-3deg);
+    font-size: 13px;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+}
+.blue-wave-title {
+    font-size: 34px;
+    font-weight: 900;
+    color: #FFFFFF;
+    line-height: 1.15;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+/* Sidebar Styling */
+.stat-box {
+    font-size: 20px;
+    font-weight: 900;
+    color: #1660C7;
+}
 </style>
 """, unsafe_allow_html=True)
 
 # Initialize login state
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
+if 'current_user' not in st.session_state:
+    st.session_state.current_user = ""
 
+# Sidebar Login & Filters
 with st.sidebar:
     st.markdown('<div class="stat-box">• NBC Expansion •</div>', unsafe_allow_html=True)
-    st.markdown('Strategic Growth Map')
+    st.caption("Strategic Growth Map")
     st.markdown("---")
     
     if not st.session_state.logged_in:
         st.subheader("🔒 Employee Login")
-        emp_id = st.text_input("Employee ID / Username", placeholder="sanskar@nbc")
-        password = st.text_input("Password", type="password")
+        username = st.text_input("Employee ID / Username", placeholder="sanskar@nbc").strip().lower()
+        password = st.text_input("Password", type="password").strip()
+        
         if st.button("Login", use_container_width=True):
-            if emp_id.strip().lower() == "sanskar@nbc" and password == "NBC_team_2026":
+            valid_users = ["sanskar@nbc", "mayank@nbc", "vipin@nbc", "manoj@nbc"]
+            # Dono passwords chalenge taaki koi error na aaye
+            valid_passwords = ["NBCteam2026", "NBC_team_2026", "nbcteam2026"]
+            
+            if username in valid_users and password in valid_passwords:
                 st.session_state.logged_in = True
+                st.session_state.current_user = username
                 st.rerun()
             else:
                 st.error("Invalid Employee ID or Password")
     else:
-        st.success("✅ Logged in as: sanskar@nbc")
+        st.success(f"Logged in: {st.session_state.current_user}")
         if st.button("Logout", use_container_width=True):
             st.session_state.logged_in = False
+            st.session_state.current_user = ""
             st.rerun()
             
-        st.markdown('<div class="team-box"><b>Business Development & Expansion Team</b><br><small>(Click on a name to view profile)</small></div>', unsafe_allow_html=True)
-        
-        with st.expander("👤 Vipin Singh Shekhawat (BD Manager)"):
-            st.image("https://raw.githubusercontent.com/sanskar2233/nbc-expansion-map/main/WhatsApp%20Image%202026-10-18%20at%204.16.48%20AM.jpeg", width=150)
-            st.caption("BD Manager - Nothing Before Coffee")
-        
-        with st.expander("👤 Manoj Singh (BD Manager)"):
-            st.caption("BD Manager - Nothing Before Coffee")
-             
-        with st.expander("👤 Mayank Iktiyan (BD & Expansion)"):
-            st.image("https://media.licdn.com/dms/image/v2/D5603AQHz626IIqkTwg/profile-displayphoto-scale_200_200/B56ZkI2jvGHcAc-/0/1756790144972?e=1793836800&v=beta&t=ydEZyJSU7IgMIgD-IAUMasQV2vF2qQOIEW_-s6Jg-dE", width=150)
-            st.caption("BD & Expansion - Nothing Before Coffee")
-
-        with st.expander("👤 Sanskar Singh Yadav (BD & Expansion)"):
-            st.image("https://media.licdn.com/dms/image/v2/D5603AQGLFnKYfzwXsg/profile-displayphoto-crop_800_800/B56Z3eEcL2IUAI-/0/1777547205499?e=1793836800&v=beta&t=TTtIjmFD5qAWQwAUcxOe5zNrdXEC_VV8eyPD563w1pw", width=150)
-            st.caption("BD & Expansion - Nothing Before Coffee")
-        
         st.markdown("---")
-        phases = ["Phase 1 (150 stores)", "Phase 2 (250 stores)", "Phase 3 (500 stores)", "Phase 4 (750 stores)", "Phase 5 (1000 stores)"]
+        phases = [
+            "Phase 1 (150 stores)", 
+            "Phase 2 (250 stores)", 
+            "Phase 3 (500 stores)", 
+            "Phase 4 (750 stores)", 
+            "Phase 5 (1000 stores)"
+        ]
         selected_phases = st.multiselect("Select Expansion Phase", phases, default=phases)
 
-# Main Dashboard Content (Only visible after login)
+# Main Dashboard Content
 if st.session_state.logged_in:
-    # Wavy Header Section with Mascots
-    col1, col2, col3 = st.columns([1, 4, 1])
-    with col1:
-        st.image("https://nothingbeforecoffee.com/wp-content/themes/damnperfect/assets/images/hero-left.webp")
-    with col2:
-        st.markdown('''
-        <div class="wave-header">
-            <div class="main-title">Bring on the Buzz</div>
-            <div class="sub-title">Business Development Next 1000 Stores Catchment Strategy</div>
-        </div>
-        ''', unsafe_allow_html=True)
-    with col3:
-        st.image("https://nothingbeforecoffee.com/wp-content/themes/damnperfect/assets/images/hero-right.webp")
+    # Top White Banner
+    st.markdown("""
+    <div class="hero-box">
+        <div class="main-title">BRING ON THE BUZZ</div>
+        <div class="sub-title">Nothing Before Coffee (NBC) — Next 1000 Stores Strategic Catchment & Expansion Engine</div>
+        <div class="red-pill-banner">• HIGH QUALITY COFFEE • BUDGET FRIENDLY PRICES • ZERO COMPROMISE • EST. 2017 JAIPUR • BRING ON THE BUZZ •</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # Metric Cards Row
-    m_col1, m_col2, m_col3, m_col4 = st.columns(4)
-    with m_col1:
-        st.markdown('<div class="metric-container"><div class="metric-value">110+</div><div class="metric-label">Outlets</div></div>', unsafe_allow_html=True)
-    with m_col2:
-        st.markdown('<div class="metric-container"><div class="metric-value">20</div><div class="metric-label">Cities</div></div>', unsafe_allow_html=True)
-    with m_col3:
-        st.markdown('<div class="metric-container"><div class="metric-value">1,00,000+</div><div class="metric-label">Cups Served</div></div>', unsafe_allow_html=True)
-    with m_col4:
-        st.markdown('<div class="metric-container"><div class="metric-value">2,50,000+</div><div class="metric-label">Happy Customers</div></div>', unsafe_allow_html=True)
+    # Founders & BD Team Section (Clean Clickable Expanders)
+    col_f, col_t = st.columns([1.2, 3.8])
+    with col_f:
+        st.image(
+            "https://raw.githubusercontent.com/sanskar2233/nbc-expansion-map/main/WhatsApp%20Image%202026-10-18%20at%204.16.48%20AM.jpeg", 
+            caption="Founders | Nothing Before Coffee", 
+            use_container_width=True
+        )
+    with col_t:
+        st.markdown('<div class="team-header">🚀 BUSINESS DEVELOPMENT & EXPANSION TEAM</div>', unsafe_allow_html=True)
+        t_col1, t_col2 = st.columns(2)
+        with t_col1:
+            with st.expander("Vipin Singh Shekhawat (BD Manager)"):
+                st.image("https://raw.githubusercontent.com/sanskar2233/nbc-expansion-map/main/WhatsApp%20Image%202026-10-18%20at%204.16.48%20AM.jpeg", width=160)
+            with st.expander("Mayank Iktiyan (BD & Expansion)"):
+                st.image("https://media.licdn.com/dms/image/v2/D5603AQHzm90d5J6g-dE/profile-displayphoto-scale_200_200/B56ZkZlJVgH4-Ae-1793836800&e=1793836800&v=beta&t=TttJlmFD5QAWQwD0o63w1pw", width=160)
+        with t_col2:
+            with st.expander("Manoj Singh (BD Manager)"):
+                st.write("**Manoj Singh** — BD Manager (NBC Expansion)")
+            with st.expander("Sanskar Singh Yadav (BD & Expansion)"):
+                st.image("https://media.licdn.com/dms/image/v2/D5603AQHzm90d5J6g-dE/profile-displayphoto-crop_800_800/B56Z3eEcl_2iS6jg-dE/profile-displayphoto-crop_800_800/B56Z3eEcl_2iS6j-dE/0/1793836800800?e=1793836800&v=beta&t=TttJlmFD5QAWQwD0o63w1pw", width=160)
+
+    st.markdown("<hr style='border-color: rgba(255,255,255,0.25);'>", unsafe_allow_html=True)
+
+    # Cartoon Mascots & Stats Row
+    c_left, s1, s2, s3, s4, c_right = st.columns([1.2, 1, 1, 1.2, 1.2, 1.2])
+    with c_left:
+        st.image("https://nothingbeforecoffee.com/wp-content/themes/damnperfect/assets/images/hero-left.webp", width=130)
+    with s1:
+        st.markdown('<div class="stat-num-red">110+</div><div class="stat-label-red">OUTLETS</div>', unsafe_allow_html=True)
+    with s2:
+        st.markdown('<div class="stat-num-red">20</div><div class="stat-label-red">CITIES</div>', unsafe_allow_html=True)
+    with s3:
+        st.markdown('<div class="stat-num-red">1,00,000+</div><div class="stat-label-red">CUPS SERVED</div>', unsafe_allow_html=True)
+    with s4:
+        st.markdown('<div class="stat-num-red">2,50,000+</div><div class="stat-label-red">HAPPY CUSTOMERS</div>', unsafe_allow_html=True)
+    with c_right:
+        st.image("https://nothingbeforecoffee.com/wp-content/themes/damnperfect/assets/images/hero-right.webp", width=130)
+
+    # NBC Website Styled Blue Banner Section
+    st.markdown("""
+    <div class="blue-wave-section">
+        <div class="stay-unfiltered-badge">STAY UNFILTERED</div>
+        <div class="blue-wave-title">ESPRESSO IS READY.<br>ARE YOU?</div>
+        <p style="font-size: 15px; font-weight: 600; max-width: 750px; margin: 0 auto; opacity: 0.95;">
+            High quality coffee. Budget friendly prices. Zero compromise.<br>
+            At NBC, coffee is not just a beverage. It is a ritual. A mood. A pre-work boost. A late-night companion.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Map & Catchment Section
+    st.markdown('<div class="team-header">📍 NEXT 1000 STORES CATCHMENT & EXPANSION MAP</div>', unsafe_allow_html=True)
 
     geolocator = Nominatim(user_agent="nbc_expansion_app")
 
@@ -135,13 +267,11 @@ if st.session_state.logged_in:
             dfs.append(df_csv)
         except Exception:
             pass
-            
         try:
             df_excel = pd.read_excel("All cafe data (1).xlsx")
             dfs.append(df_excel)
         except Exception:
             pass
-            
         if dfs:
             return pd.concat(dfs, ignore_index=True)
         return None
@@ -149,68 +279,53 @@ if st.session_state.logged_in:
     try:
         df = load_and_process_data()
         if df is None or df.empty:
-            st.warning("Data files load nahi ho paayi. Kripya check karein ki CSV/Excel files GitHub par sahi naam se uploaded hain.")
+            st.warning("Data files load nahi ho paayi. Kripya GitHub repository mein CSV/Excel file names check karein.")
         else:
             lat_col = next((c for c in df.columns if c.strip().lower() in ['latitude', 'lat']), None)
             lon_col = next((c for c in df.columns if c.strip().lower() in ['longitude', 'lon', 'long']), None)
             addr_col = next((c for c in df.columns if 'address' in c.strip().lower() or 'location' in c.strip().lower()), None)
             name_col = next((c for c in df.columns if 'name' in c.strip().lower() or 'store' in c.strip().lower() or 'brand' in c.strip().lower()), None)
             city_col = next((c for c in df.columns if 'city' in c.strip().lower() or 'location' in c.strip().lower()), None)
-            phase_col = next((c for c in df.columns if 'phase' in c.strip().lower()), None)
 
             if not lat_col or not lon_col:
                 if addr_col:
                     st.info("Fetching coordinates from addresses...")
-                    coords = df[addr_col].apply(get_coordinates)
+                    coords = df[addr_col].head(50).apply(get_coordinates)
+                    df = df.head(50).copy()
                     df['Latitude'] = [c[0] for c in coords]
                     df['Longitude'] = [c[1] for c in coords]
                     lat_col, lon_col = 'Latitude', 'Longitude'
-                    df = df.dropna(subset=[lat_col, lon_col])
 
-            filtered_df = df
-            if phase_col and selected_phases:
-                filtered_df = df[df[phase_col].astype(str).isin([p.split(' ')[1] for p in selected_phases])]
-                if filtered_df.empty:
-                    filtered_df = df
-
-            if city_col and city_col in filtered_df.columns:
-                city_distribution = filtered_df[city_col].value_counts().reset_index()
-                city_distribution.columns = ['City', 'Store Count']
-                st.subheader("City-wise Store Distribution")
-                st.bar_chart(city_distribution.set_index('City'))
-
-            st.subheader("📍 Strategic Catchment & Expansion Map")
-            m = folium.Map(location=[28.4595, 77.0266], zoom_start=11, tiles="OpenStreetMap")
-            
             if lat_col and lon_col:
-                nbc_stores = filtered_df.to_dict('records')
-                for comp in nbc_stores:
+                df[lat_col] = pd.to_numeric(df[lat_col], errors='coerce')
+                df[lon_col] = pd.to_numeric(df[lon_col], errors='coerce')
+                filtered_df = df.dropna(subset=[lat_col, lon_col])
+
+                m = folium.Map(location=[28.6139, 77.2090], zoom_start=11, tiles="OpenStreetMap")
+                
+                for _, comp in filtered_df.iterrows():
                     lat = comp.get(lat_col)
                     lon = comp.get(lon_col)
-                    if pd.notna(lat) and pd.notna(lon):
-                        store_title = str(comp.get(name_col, "Store")) if name_col else "Store"
-                        popup_html = f"""
-                        <div style='width: 160px;'>
-                        <b>{store_title}</b><br>
-                        NBC Target Catchment
-                        </div>
-                        """
-                        icon_color = 'green' if comp.get(city_col) == "Standard" else 'red'
-                        folium.Marker(
-                            location=[float(lat), float(lon)],
-                            popup=folium.Popup(popup_html, max_width=200),
-                            tooltip=store_title,
-                            icon=folium.Icon(color=icon_color)
-                        ).add_to(m)
+                    store_title = str(comp.get(name_col, "Coffee Store"))
+                    popup_html = f"<div style='width: 160px;'><b>{store_title}</b><br>Catchment Marker</div>"
+                    icon_color = 'blue' if 'nbc' in store_title.lower() or 'nothing before' in store_title.lower() else 'red'
+                    
+                    folium.Marker(
+                        location=[lat, lon],
+                        popup=folium.Popup(popup_html, max_width=200),
+                        tooltip=store_title,
+                        icon=folium.Icon(color=icon_color, icon='info-sign')
+                    ).add_to(m)
 
-            st_folium(m, width=1100, height=600)
+                st_folium(m, width=1200, height=550)
     except Exception as e:
         st.error(f"Error loading CSV/Map data: {e}")
+
 else:
-    # Lock screen message on main page before login
-    st.markdown('''
-    <div class="wave-header" style="margin-top: 40px;">
-        <div class="main-title">🔒 NBC Expansion Engine</div>
+    # Lock screen message before login
+    st.markdown("""
+    <div class="hero-box" style="margin-top: 40px;">
+        <div class="main-title" style="font-size: 32px;">🔒 NBC Expansion Engine</div>
         <div class="sub-title">Please log in from the left sidebar using your Employee ID and Password to access the catchment map.</div>
     </div>
-    ''', unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
