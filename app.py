@@ -8,7 +8,7 @@ st.title("☕ Nothing Before Coffee — Expansion Map")
 st.write("Click on any store pin or catchment circle to inspect the location.")
 
 # Center map on Jaipur
-m = folium.Map(location=[26.9124, 75.7873], zoom_start=12, tiles="OpenStreet map")
+m = folium.Map(location=[26.9124, 75.7873], zoom_start=12, 
 
 # Sample NBC Outlets
 nbc_stores = [
