@@ -22,25 +22,26 @@ competitors = [
 
 # 1. Plot NBC Outlets with 1km Catchments
 for store in nbc_stores:
-    folium.Circle(
-        location=[store["lat"], store["lon"]],
-        radius=1000,
-        color="#6F4E37",
-        fill=True,
-        fill_opacity=0.15,
-        popup=f"Catchment: {store['name']}"
-    ).add_to(m)
+    lat = store.get("Latitude") or store.get("lat")
+    lon = store.get("Longitude") or store.get("lon")
+    name = store.get("Store_Name") or store.get("name") or "NBC Store"
+    
+    if pd.notna(lat) and pd.notna(lon):
+        folium.Circle(
+            location=[lat, lon],
+            radius=1000,
+            color="#8F4E37",
+            fill=True,
+            fill_opacity=0.15,
+            popup=f"Catchment: {name}"
+        ).add_to(m)
 
-    folium.Marker(
-        location=[store["lat"], store["lon"]],
-        popup=f"<b>{store['name']}</b>",
-        tooltip="NBC Store",
-        icon=folium.Icon(color="darkred", icon="coffee", prefix="fa")
-    ).add_to(m)
-
-# 2. Plot Competitors
-for comp in competitors:
-    folium.Marker(
+        folium.Marker(
+            location=[lat, lon],
+            popup=f"NBC Store: {name}",
+            tooltip=name,
+            icon=folium.Icon(color="darkred", icon="coffee", prefix="fa")
+        ).add_to(m)
         location=[comp["lat"], comp["lon"]],
         popup=f"<b>{comp['name']}</b>",
         tooltip="Competitor",
