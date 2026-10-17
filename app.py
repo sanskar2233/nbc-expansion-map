@@ -55,7 +55,7 @@ try:
 
     if not lat_col or not lon_col:
         if addr_col:
-            st.info("Addresses se coordinates fetch kiye ja rahe hain...")
+            st.info(".st.info("Fetching coordinates from addresses...")
             coords = df[addr_col].apply(get_coordinates)
             df['Latitude'] = [c[0] for c in coords]
             df['Longitude'] = [c[1] for c in coords]
