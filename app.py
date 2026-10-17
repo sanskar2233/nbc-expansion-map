@@ -11,7 +11,6 @@ st.write("Click on any store pin or catchment circle to inspect the location.")
 m = folium.Map(location=[26.9124, 75.7873], zoom_start=12, )
 
 # Sample NBC Outlets
-nbc_stores = # Load data from CSV
 df = pd.read_csv("Delhi NCR Coffee Chains Store Locations - ALL Brands Data.csv")
 nbc_stores = df.to_dict('records')
 
