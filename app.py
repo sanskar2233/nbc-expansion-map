@@ -277,7 +277,7 @@ with st.sidebar:
     ]
     selected_phases = st.multiselect("Select Target Expansion Phase:", phases, default=phases)
     st.markdown("---")
-    st.markdown("**BD Leadership Team:**\n- Vipin Singh Shekhawat\n- Manoj Singh\n- Sanskar Singh Yadav")
+    st.markdown("**BD Leadership Team:**\n- Vipin Singh Shekhawat\n- Manoj Singh\n- Mayank Iktiyan\n- Sanskar Singh Yadav")
 
 # 10. Interactive Catchment Map Section
 st.markdown('<div class="section-heading">Next 1000 Stores Catchment & Expansion Map</div>', unsafe_allow_html=True)
