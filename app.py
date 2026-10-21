@@ -1,4 +1,13 @@
 import streamlit as st
+st.markdown("### 📍 Google Maps Location View")
+
+# Google Maps ka embed iframe HTML code yahan paste karein
+google_map_html = """
+<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14011.691745484888!2d77.2090!3d28.6139!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjjCsDM2JzUwLjQiTiA3N8KwMTInMzIuNCJF!5e0!3m2!1sen!2sin!4v1234567890" 
+width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+"""
+
+st.markdown(google_map_html, unsafe_allow_html=True)
 import folium
 from streamlit_folium import st_folium
 import pandas as pd
