@@ -290,8 +290,11 @@ with st.sidebar:
         "V-Mart",
         "Lenskart"
     ]
-    selected_highlight_brands = st.multiselect(
-        "Select Brands to Highlight on Map:", 
+   selected_highlight_brands = st.multiselect(
+    "Select Brands to Highlight on Map:",
+    options=highlight_brands,
+    default=highlight_brands
+)
       # 10. Interactive Catchment Map Section (Google Maps integration for All-India brands)
 st.markdown('<div class="section-heading">All-India Strategic Catchment & Key Brand Outlets Map</div>', unsafe_allow_html=True)
 
