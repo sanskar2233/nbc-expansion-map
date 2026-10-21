@@ -277,6 +277,26 @@ def load_and_process_data():
 with st.sidebar:
     st.image(NBC_LOGO, width=110)
     st.markdown("### 🗺️ NBC Expansion Phases")
+    with st.sidebar:
+    st.image(NBC_LOGO, width=110)
+    st.markdown("### 🇮🇳 All-India Brand Highlights")
+    
+    highlight_brands = [
+        "Nothing Before Coffee",
+        "Zudio",
+        "Starbucks",
+        "Blue Tokai",
+        "Third Wave",
+        "V-Mart",
+        "Lenskart"
+    ]
+    selected_highlight_brands = st.multiselect(
+        "Select Brands to Highlight on Map:", 
+        highlight_brands, 
+        default=highlight_brands
+    )
+    st.markdown("---")
+    st.markdown("**BD Leadership Team:**\n- Vipin Singh Shekhawat\n- Manoj Singh\n- Mayank Iktiyan\n- Sanskar Singh Yadav")
     phases = [
         "Phase 1 (150 stores)",
         "Phase 2 (250 stores)",
