@@ -277,7 +277,7 @@ def load_and_process_data():
 with st.sidebar:
     st.image(NBC_LOGO, width=110)
     st.markdown("### 🗺️ NBC Expansion Phases")
-    with st.sidebar:
+
     st.image(NBC_LOGO, width=110)
     st.markdown("### 🇮🇳 All-India Brand Highlights")
     
