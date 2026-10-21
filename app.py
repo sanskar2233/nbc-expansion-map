@@ -1,13 +1,4 @@
 import streamlit as st
-st.markdown("### 📍 Google Maps Location View")
-
-# Google Maps ka embed iframe HTML code yahan paste karein
-google_map_html = """
-<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14011.691745484888!2d77.2090!3d28.6139!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjjCsDM2JzUwLjQiTiA3N8KwMTInMzIuNCJF!5e0!3m2!1sen!2sin!4v1234567890" 
-width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
-"""
-
-st.markdown(google_map_html, unsafe_allow_html=True)
 import folium
 from streamlit_folium import st_folium
 import pandas as pd
@@ -15,7 +6,7 @@ from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
 import time
 
-# 1. Page Configuration
+# 1. Page Configuration (Must be the very first Streamlit command)
 st.set_page_config(
     page_title="Nothing Before Coffee | NBC - Bring on the Buzz",
     page_icon="https://nothingbeforecoffee.com/cdn/shop/files/logo.png?height=100&v=1770827259",
@@ -239,13 +230,21 @@ with g2:
 with g3:
     st.image(GALLERY_IMG_3, caption="Nothing Before Coffee — Signature Outlet", use_container_width=True)
 
+# Google Maps Embed View (Kept from your code)
+st.markdown('<div class="section-heading">📍 Google Maps Location View</div>', unsafe_allow_html=True)
+google_map_html = """
+<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14011.691745484888!2d77.2090!3d28.6139!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjjCsDM2JzUwLjQiTiA3N8KwMTInMzIuNCJF!5e0!3m2!1sen!2sin!4v1234567890" 
+width="100%" height="450" style="border:0; border-radius: 12px;" allowfullscreen="" loading="lazy"></iframe>
+"""
+st.markdown(google_map_html, unsafe_allow_html=True)
+
 # 9. Sidebar Filter & Map Engine
 geolocator = Nominatim(user_agent="nbc_bd_expansion_app")
 
 def get_coordinates(address):
     try:
         time.sleep(1)
-        location = geolocator.geocode(f"{address}, Delhi NCR, India", timeout=10)
+        location = geolocator.geocode(f"{address}, India", timeout=10)
         if location:
             return location.latitude, location.longitude
     except (GeocoderTimedOut, Exception):
@@ -254,33 +253,54 @@ def get_coordinates(address):
 
 @st.cache_data(show_spinner=False)
 def load_and_process_data():
-    df = pd.read_csv("Delhi NCR Coffee Chains Store Locations - ALL Brands Data.csv", encoding='latin1')
-    lat_col = next((c for c in df.columns if c.strip().lower() in ['latitude', 'lat']), None)
-    lon_col = next((c for c in df.columns if c.strip().lower() in ['longitude', 'lon', 'long']), None)
-    addr_col = next((c for c in df.columns if 'address' in c.strip().lower() or 'location' in c.strip().lower() or 'market' in c.strip().lower()), None)
-    name_col = next((c for c in df.columns if 'name' in c.strip().lower() or 'store' in c.strip().lower() or 'city' in c.strip().lower()), None)
-    phase_col = next((c for c in df.columns if 'phase' in c.strip().lower()), None)
+    dfs = []
+    # Load Excel sheets if present
+    for excel_file in ["Delhi NCR Coffee Chains Store Locations (4).xlsx", "All cafe data (1).xlsx"]:
+        try:
+            xls = pd.ExcelFile(excel_file)
+            for sheet in xls.sheet_names:
+                temp_df = pd.read_excel(excel_file, sheet_name=sheet)
+                if not temp_df.empty:
+                    dfs.append(temp_df)
+        except Exception:
+            pass
+
+    # Load CSV if present
+    try:
+        df_csv = pd.read_csv("Delhi NCR Coffee Chains Store Locations - ALL Brands Data.csv", encoding='latin1')
+        dfs.append(df_csv)
+    except Exception:
+        pass
+
+    if not dfs:
+        return None, None, None, None, None, None, None
+
+    df = pd.concat(dfs, ignore_index=True)
+
+    lat_col = next((c for c in df.columns if str(c).strip().lower() in ['latitude', 'lat']), None)
+    lon_col = next((c for c in df.columns if str(c).strip().lower() in ['longitude', 'lon', 'long']), None)
+    addr_col = next((c for c in df.columns if any(k in str(c).strip().lower() for k in ['address', 'location', 'market', 'street'])), None)
+    name_col = next((c for c in df.columns if any(k in str(c).strip().lower() for k in ['name', 'store', 'outlet', 'city'])), None)
+    brand_col = next((c for c in df.columns if any(k in str(c).strip().lower() for k in ['brand', 'group', 'category'])), None)
+    phase_col = next((c for c in df.columns if 'phase' in str(c).strip().lower()), None)
 
     if lat_col and lon_col:
         df[lat_col] = pd.to_numeric(df[lat_col], errors='coerce')
         df[lon_col] = pd.to_numeric(df[lon_col], errors='coerce')
         df = df.dropna(subset=[lat_col, lon_col])
     elif addr_col:
-        coords = df[addr_col].apply(get_coordinates)
-        df['Latitude'] = [c[0] if c else None for c in coords]
-        df['Longitude'] = [c[1] if c else None for c in coords]
+        sample_df = df.dropna(subset=[addr_col]).head(80).copy()
+        coords = sample_df[addr_col].apply(get_coordinates)
+        sample_df['Latitude'] = [c[0] if c else None for c in coords]
+        sample_df['Longitude'] = [c[1] if c else None for c in coords]
         lat_col, lon_col = 'Latitude', 'Longitude'
-        df = df.dropna(subset=[lat_col, lon_col])
+        df = sample_df.dropna(subset=[lat_col, lon_col])
 
-    return df, lat_col, lon_col, addr_col, name_col, phase_col
+    return df, lat_col, lon_col, addr_col, name_col, brand_col, phase_col
 
 with st.sidebar:
     st.image(NBC_LOGO, width=110)
-    st.markdown("### 🗺️ NBC Expansion Phases")
-
-    st.image(NBC_LOGO, width=110)
     st.markdown("### 🇮🇳 All-India Brand Highlights")
-    
     highlight_brands = [
         "Nothing Before Coffee",
         "Zudio",
@@ -288,21 +308,35 @@ with st.sidebar:
         "Blue Tokai",
         "Third Wave",
         "V-Mart",
-        "Lenskart"
+        "Lenskart",
+        "Domino's"
     ]
-   selected_highlight_brands = st.multiselect(
-    "Select Brands to Highlight on Map:",
-    options=highlight_brands,
-    default=highlight_brands
-)
-      # 10. Interactive Catchment Map Section (Google Maps integration for All-India brands)
+    selected_highlight_brands = st.multiselect(
+        "Select Brands to Highlight on Map:",
+        options=highlight_brands,
+        default=highlight_brands
+    )
+
+    st.markdown("---")
+    st.markdown("### 🗺️ NBC Expansion Phases")
+    phases = [
+        "Phase 1 (150 stores)",
+        "Phase 2 (250 stores)",
+        "Phase 3 (500 stores)",
+        "Phase 4 (750 stores)",
+        "Phase 5 (1000 stores)"
+    ]
+    selected_phases = st.multiselect("Select Target Expansion Phase:", phases, default=phases)
+    st.markdown("---")
+    st.markdown("**BD Leadership Team:**\n- Vipin Singh Shekhawat\n- Manoj Singh\n- Mayank Iktiyan\n- Sanskar Singh Yadav")
+
+# 10. Interactive Catchment Map Section (Google Maps integration for All-India brands)
 st.markdown('<div class="section-heading">All-India Strategic Catchment & Key Brand Outlets Map</div>', unsafe_allow_html=True)
 
-# Google Maps standard roadmap tiles focused across India
 m = folium.Map(
-    location=[22.5937, 78.9629], 
-    zoom_start=5, 
-    tiles='https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', 
+    location=[22.5937, 78.9629],
+    zoom_start=5,
+    tiles='https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
     attr='Google'
 )
 
@@ -322,33 +356,43 @@ def get_brand_marker_color(brand_name):
         return 'purple'
     elif 'lenskart' in b:
         return 'beige'
-    return 'gray'
+    elif 'domino' in b:
+        return 'red'
+    return 'blue'
 
 try:
-    df, lat_col, lon_col, addr_col, name_col, brand_col = load_and_process_data()
+    df, lat_col, lon_col, addr_col, name_col, brand_col, phase_col = load_and_process_data()
 
     if df is not None and not df.empty and lat_col and lon_col:
+        filtered_df = df.copy()
+
         if brand_col and selected_highlight_brands:
-            filtered_df = df[df[brand_col].astype(str).apply(lambda x: any(b.lower() in x.lower() for b in selected_highlight_brands))]
-            if filtered_df.empty:
-                filtered_df = df
-        else:
-            filtered_df = df
+            brand_filtered = filtered_df[filtered_df[brand_col].astype(str).apply(
+                lambda x: any(b.lower() in x.lower() for b in selected_highlight_brands)
+            )]
+            if not brand_filtered.empty:
+                filtered_df = brand_filtered
+
+        if phase_col and selected_phases:
+            phase_filtered = filtered_df[filtered_df[phase_col].astype(str).isin(selected_phases)]
+            if not phase_filtered.empty:
+                filtered_df = phase_filtered
 
         for comp in filtered_df.head(600).to_dict('records'):
             lat = comp.get(lat_col)
             lon = comp.get(lon_col)
             if pd.notna(lat) and pd.notna(lon):
-                store_title = str(comp.get(name_col, "Store Location")) if name_col else "Store Location"
-                store_brand = str(comp.get(brand_col, "Brand")) if brand_col else "Brand"
+                store_title = str(comp.get(name_col, "NBC Target Location")) if name_col else "NBC Target Location"
+                store_brand = str(comp.get(brand_col, "Nothing Before Coffee")) if brand_col else "Nothing Before Coffee"
                 store_addr = str(comp.get(addr_col, "")) if addr_col else ""
+                store_phase = str(comp.get(phase_col, "Expansion")) if phase_col else "Expansion"
 
-                m_color = get_brand_marker_color(store_brand)
+                m_color = get_brand_marker_color(store_brand if brand_col else store_title)
 
                 popup_html = f"""
                 <div style='width: 210px; font-family: Montserrat, sans-serif;'>
                     <b style='color: #0052CC; font-size: 14px;'>{store_title}</b><br>
-                    <span style='color: #E63946; font-weight: bold; font-size: 12px;'>Brand: {store_brand}</span><br>
+                    <span style='color: #E63946; font-weight: bold; font-size: 12px;'>{store_brand} | {store_phase}</span><br>
                     <span style='font-size: 11px; color: #333;'>{store_addr}</span>
                 </div>
                 """
@@ -359,66 +403,7 @@ try:
                     icon=folium.Icon(color=m_color, icon="info-sign")
                 ).add_to(m)
 
-        st_folium(m, width=1200, height=600)
-    else:
-        st.warning("Error loading map data from spreadsheet.")
+    st_folium(m, width=1200, height=600)
 
 except Exception as e:
-    st.error(f"Error loading map data: {e}")  
-        highlight_brands, 
-        default=highlight_brands
-    )
-    st.markdown("---")
-    st.markdown("**BD Leadership Team:**\n- Vipin Singh Shekhawat\n- Manoj Singh\n- Mayank Iktiyan\n- Sanskar Singh Yadav")
-    phases = [
-        "Phase 1 (150 stores)",
-        "Phase 2 (250 stores)",
-        "Phase 3 (500 stores)",
-        "Phase 4 (750 stores)",
-        "Phase 5 (1000 stores)"
-    ]
-    selected_phases = st.multiselect("Select Target Expansion Phase:", phases, default=phases)
-    st.markdown("---")
-    st.markdown("**BD Leadership Team:**\n- Vipin Singh Shekhawat\n- Manoj Singh\n- Mayank Iktiyan\n- Sanskar Singh Yadav")
-
-# 10. Interactive Catchment Map Section
-st.markdown('<div class="section-heading">Next 1000 Stores Catchment & Expansion Map</div>', unsafe_allow_html=True)
-
-m = folium.Map(location=[28.6139, 77.2090], zoom_start=10, tiles="OpenStreetMap")
-
-try:
-    df, lat_col, lon_col, addr_col, name_col, phase_col = load_and_process_data()
-
-    if phase_col and selected_phases:
-        filtered_df = df[df[phase_col].astype(str).isin(selected_phases)]
-        if filtered_df.empty:
-            filtered_df = df
-    else:
-        filtered_df = df
-
-    for comp in filtered_df.to_dict('records'):
-        lat = comp.get(lat_col)
-        lon = comp.get(lon_col)
-        if pd.notna(lat) and pd.notna(lon):
-            store_title = comp.get(name_col, "NBC Target Location") if name_col else "NBC Target Location"
-            store_addr = comp.get(addr_col, "") if addr_col else ""
-            store_phase = comp.get(phase_col, "Expansion") if phase_col else "Expansion"
-
-            popup_html = f"""
-            <div style='width: 200px; font-family: Montserrat, sans-serif;'>
-                <b style='color: #0052CC; font-size: 14px;'>{store_title}</b><br>
-                <span style='color: #E63946; font-weight: bold; font-size: 12px;'>{store_phase}</span><br>
-                <span style='font-size: 11px; color: #333;'>{store_addr}</span>
-            </div>
-            """
-            folium.Marker(
-                location=[lat, lon],
-                popup=folium.Popup(popup_html, max_width=240),
-                tooltip=str(store_title),
-                icon=folium.Icon(color="blue", icon="info-sign")
-            ).add_to(m)
-
-    st_folium(m, width=1200, height=550)
-
-except Exception as e:
-    st.error(f"Error loading CSV file: {e}")
+    st.error(f"Error loading map data: {e}")
