@@ -292,6 +292,76 @@ with st.sidebar:
     ]
     selected_highlight_brands = st.multiselect(
         "Select Brands to Highlight on Map:", 
+      # 10. Interactive Catchment Map Section (Google Maps integration for All-India brands)
+st.markdown('<div class="section-heading">All-India Strategic Catchment & Key Brand Outlets Map</div>', unsafe_allow_html=True)
+
+# Google Maps standard roadmap tiles focused across India
+m = folium.Map(
+    location=[22.5937, 78.9629], 
+    zoom_start=5, 
+    tiles='https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', 
+    attr='Google'
+)
+
+def get_brand_marker_color(brand_name):
+    b = str(brand_name).lower()
+    if 'nothing before' in b or 'nbc' in b:
+        return 'darkblue'
+    elif 'zudio' in b:
+        return 'pink'
+    elif 'starbucks' in b:
+        return 'green'
+    elif 'blue tokai' in b:
+        return 'cadetblue'
+    elif 'third wave' in b:
+        return 'orange'
+    elif 'v-mart' in b or 'vmart' in b:
+        return 'purple'
+    elif 'lenskart' in b:
+        return 'beige'
+    return 'gray'
+
+try:
+    df, lat_col, lon_col, addr_col, name_col, brand_col = load_and_process_data()
+
+    if df is not None and not df.empty and lat_col and lon_col:
+        if brand_col and selected_highlight_brands:
+            filtered_df = df[df[brand_col].astype(str).apply(lambda x: any(b.lower() in x.lower() for b in selected_highlight_brands))]
+            if filtered_df.empty:
+                filtered_df = df
+        else:
+            filtered_df = df
+
+        for comp in filtered_df.head(600).to_dict('records'):
+            lat = comp.get(lat_col)
+            lon = comp.get(lon_col)
+            if pd.notna(lat) and pd.notna(lon):
+                store_title = str(comp.get(name_col, "Store Location")) if name_col else "Store Location"
+                store_brand = str(comp.get(brand_col, "Brand")) if brand_col else "Brand"
+                store_addr = str(comp.get(addr_col, "")) if addr_col else ""
+
+                m_color = get_brand_marker_color(store_brand)
+
+                popup_html = f"""
+                <div style='width: 210px; font-family: Montserrat, sans-serif;'>
+                    <b style='color: #0052CC; font-size: 14px;'>{store_title}</b><br>
+                    <span style='color: #E63946; font-weight: bold; font-size: 12px;'>Brand: {store_brand}</span><br>
+                    <span style='font-size: 11px; color: #333;'>{store_addr}</span>
+                </div>
+                """
+                folium.Marker(
+                    location=[lat, lon],
+                    popup=folium.Popup(popup_html, max_width=240),
+                    tooltip=f"{store_brand} - {store_title}",
+                    icon=folium.Icon(color=m_color, icon="info-sign")
+                ).add_to(m)
+
+        st_folium(m, width=1200, height=600)
+    else:
+        st.warning("Error loading map data from spreadsheet.")
+
+except Exception as e:
+    st.error(f"Error loading map data: {e}")  
         highlight_brands, 
         default=highlight_brands
     )
