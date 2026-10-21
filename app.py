@@ -188,6 +188,7 @@ st.markdown("""
     <div class="bd-members">
         <span class="bd-badge">👔 Vipin Singh Shekhawat (BD Manager)</span>
         <span class="bd-badge">👔 Manoj Singh (BD Manager)</span>
+        <span class="bd-badge">📍 Mayank Iktiyan (BD & Expansion)</span>
         <span class="bd-badge">📍 Sanskar Singh Yadav (BD & Expansion)</span>
     </div>
 </div>
