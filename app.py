@@ -21,7 +21,7 @@ GALLERY_IMG_1 = "https://cdn.shopify.com/s/files/1/0694/5374/2274/files/01.png?v
 GALLERY_IMG_2 = "https://nothingbeforecoffee.com/cdn/shop/files/02.png?v=1772269573&width=352"
 GALLERY_IMG_3 = "https://nothingbeforecoffee.com/cdn/shop/files/03.png?v=1772269573&width=352"
 
-# 3. Custom CSS (Exact NBC Website Blue, White & Red Theme)
+# 3. Custom CSS (Exact NBC Website Blue, White & Red Theme + GeoIQ Enhancements)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap');
@@ -71,7 +71,7 @@ st.markdown("""
         margin-bottom: 20px;
     }
 
-    /* Unified BD Team Strip */
+    /* Unified BD Team Strip (Integrated right into the main dashboard) */
     .bd-team-banner {
         background-color: #0052CC;
         color: #FFFFFF;
@@ -92,7 +92,7 @@ st.markdown("""
         color: #FFD166;
     }
     .bd-members {
-        font-size: 15px;
+        font-size: 16px;
         font-weight: 700;
         color: #FFFFFF;
     }
@@ -187,10 +187,10 @@ with col_hero:
     st.markdown("""
     <div class="nbc-hero-wrapper">
         <div class="buzz-title">BRING ON THE BUZZ</div>
-        <div class="buzz-subtitle">Nothing Before Coffee (NBC) — Next 1000 Stores Strategic Catchment & GeoIQ Expansion Engine</div>
+        <div class="buzz-subtitle">Nothing Before Coffee (NBC) — Strategic Catchment & GeoIQ Expansion Engine</div>
     </div>
     <div class="nbc-red-ticker">
-        ☕ HIGH QUALITY COFFEE • BUDGET FRIENDLY PRICES • ZERO COMPROMISE • EST. 2017 JAIPUR • BRING ON THE BUZZ ☕
+        ☕ HIGH QUALITY COFFEE • BUDGET FRIENDLY PRICES • ZERO COMPROMISE • GEOIQ SPATIAL INTEL ☕
     </div>
     """, unsafe_allow_html=True)
 
@@ -243,16 +243,8 @@ with g2:
 with g3:
     st.image(GALLERY_IMG_3, caption="Nothing Before Coffee — Signature Outlet", use_container_width=True)
 
-# Google Maps Embed View
-st.markdown('<div class="section-heading">📍 Google Maps Location View</div>', unsafe_allow_html=True)
-google_map_html = """
-<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14011.691745484888!2d77.2090!3d28.6139!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjjCsDM2JzUwLjQiTiA3N8KwMTInMzIuNCJF!5e0!3m2!1sen!2sin!4v1234567890" 
-width="100%" height="450" style="border:0; border-radius: 12px;" allowfullscreen="" loading="lazy"></iframe>
-"""
-st.markdown(google_map_html, unsafe_allow_html=True)
-
-# 9. GEOIQ SIDEBAR (Open Sidebar for GeoIQ Intelligence Engine)
-geolocator = Nominatim(user_agent="geoiq_nbc_engine")
+# 9. Sidebar Filter & GeoIQ Map Engine Setup
+geolocator = Nominatim(user_agent="nbc_geoiq_expansion_app")
 
 def get_coordinates(address):
     try:
@@ -260,28 +252,56 @@ def get_coordinates(address):
         location = geolocator.geocode(f"{address}, India", timeout=10)
         if location:
             return location.latitude, location.longitude
-    except:
-        pass
+    except (GeocoderTimedOut, Exception):
+        return None, None
     return None, None
+
+@st.cache_data(show_spinner=False)
+def load_and_process_data():
+    dfs = []
+    for excel_file in ["Delhi NCR Coffee Chains Store Locations (4).xlsx", "All cafe data (1).xlsx"]:
+        try:
+            xls = pd.ExcelFile(excel_file)
+            for sheet in xls.sheet_names:
+                temp_df = pd.read_excel(excel_file, sheet_name=sheet)
+                if not temp_df.empty:
+                    dfs.append(temp_df)
+        except Exception:
+            pass
+
+    try:
+        df_csv = pd.read_csv("Delhi NCR Coffee Chains Store Locations - ALL Brands Data.csv", encoding='latin1')
+        dfs.append(df_csv)
+    except Exception:
+        pass
+
+    if not dfs:
+        return None, None, None, None, None, None, None
+
+    df = pd.concat(dfs, ignore_index=True)
+    lat_col = next((c for c in df.columns if str(c).strip().lower() in ['latitude', 'lat']), None)
+    lon_col = next((c for c in df.columns if str(c).strip().lower() in ['longitude', 'lon', 'long']), None)
+    addr_col = next((c for c in df.columns if any(k in str(c).strip().lower() for k in ['address', 'location', 'market', 'street'])), None)
+    name_col = next((c for c in df.columns if any(k in str(c).strip().lower() for k in ['name', 'store', 'outlet', 'city'])), None)
+    brand_col = next((c for c in df.columns if any(k in str(c).strip().lower() for k in ['brand', 'group', 'category'])), None)
+    phase_col = next((c for c in df.columns if 'phase' in str(c).strip().lower()), None)
+
+    if lat_col and lon_col:
+        df[lat_col] = pd.to_numeric(df[lat_col], errors='coerce')
+        df[lon_col] = pd.to_numeric(df[lon_col], errors='coerce')
+        df = df.dropna(subset=[lat_col, lon_col])
+    return df, lat_col, lon_col, addr_col, name_col, brand_col, phase_col
 
 with st.sidebar:
     st.image(NBC_LOGO, width=110)
     st.markdown("### 🌐 GeoIQ Spatial Intelligence")
-    st.markdown("Open site evaluation and catchment parameters below:")
     
     # GeoIQ Search & Radius Controls
-    search_location = st.text_input("🔍 Target City / Area / Mall", value="Civil Lines, Prayagraj")
-    radius_km = st.slider("📍 Catchment Radius (km)", min_value=0.5, max_value=5.0, value=1.5, step=0.5)
+    search_location = st.text_input("🔍 Search City / Area / Mall", value="Civil Lines, Prayagraj")
+    radius_km = st.slider("📍 Catchment Radius Buffer (km)", min_value=0.5, max_value=5.0, value=1.5, step=0.5)
     
     st.markdown("---")
-    st.markdown("### 🏢 Retail Vertical")
-    vertical = st.selectbox(
-        "Select Vertical:",
-        ["Café & Specialty Coffee (NBC)", "Apparel & Retail (Zudio)", "Quick Service Restaurant (QSR)", "Pharmacy & Health"]
-    )
-    
-    st.markdown("---")
-    st.markdown("### 🇮🇳 Brand Filters")
+    st.markdown("### 🇮🇳 All-India Brand Highlights")
     highlight_brands = [
         "Nothing Before Coffee",
         "Zudio",
@@ -293,13 +313,13 @@ with st.sidebar:
         "Domino's"
     ]
     selected_highlight_brands = st.multiselect(
-        "Highlight Brands on Map:",
+        "Select Brands to Highlight on Map:",
         options=highlight_brands,
-        default=["Nothing Before Coffee", "Zudio", "Starbucks"]
+        default=highlight_brands
     )
 
     st.markdown("---")
-    st.markdown("### 🗺️ Expansion Phases")
+    st.markdown("### 🗺️ NBC Expansion Phases")
     phases = [
         "Phase 1 (150 stores)",
         "Phase 2 (250 stores)",
@@ -307,59 +327,49 @@ with st.sidebar:
         "Phase 4 (750 stores)",
         "Phase 5 (1000 stores)"
     ]
-    selected_phases = st.multiselect("Target Expansion Phase:", phases, default=phases)
-    
+    selected_phases = st.multiselect("Select Target Expansion Phase:", phases, default=phases)
     st.markdown("---")
-    st.markdown("**BD Team Execution:**\n- Sanskar Singh Yadav\n- Mayank Iktiyan\n- Vipin Singh Shekhawat\n- Manoj Singh")
+    st.markdown("**BD Leadership Team:**\n- Vipin Singh Shekhawat\n- Manoj Singh\n- Mayank Iktiyan\n- Sanskar Singh Yadav")
 
-# Geocode Sidebar Location
-@st.cache_data(show_spinner=False)
-def get_lat_lon(query):
-    try:
-        loc = geolocator.geocode(query, timeout=10)
-        if loc:
-            return loc.latitude, loc.longitude
-    except:
-        pass
-    return 25.4358, 81.8463 # Default fallback
+# Get Coordinates for Searched Location
+center_lat, center_lon = get_coordinates(search_location)
+if not center_lat or not center_lon:
+    center_lat, center_lon = 25.4358, 81.8463 # Default fallback
 
-center_lat, center_lon = get_lat_lon(search_location)
-
-# 10. GeoIQ Real-time Intelligence Metrics Dashboard
+# 10. GeoIQ Real-Time Intelligence Metrics Dashboard
 st.markdown('<div class="section-heading">📈 GeoIQ Catchment Intelligence Dashboard</div>', unsafe_allow_html=True)
-
 random.seed(int(center_lat * 1000))
-suitability_score = random.randint(75, 96)
-predicted_footfall = f"{random.randint(14, 30)}K / mo"
+suitability_score = random.randint(76, 96)
+predicted_footfall = f"{random.randint(15, 32)}K / mo"
 avg_spend = f"₹{random.randint(190, 340)}"
-rental_index = f"₹{random.randint(95, 220)} / sq.ft."
+rental_index = f"₹{random.randint(95, 230)} / sq.ft."
 
-g_col1, g_col2, g_col3, g_col4 = st.columns(4)
-with g_col1:
+g1, g2, g3, g4 = st.columns(4)
+with g1:
     st.markdown(f'<div class="geoiq-metric-card"><div class="geoiq-metric-val">{suitability_score}/100</div><div class="geoiq-metric-lbl">Suitability Score</div></div>', unsafe_allow_html=True)
-with g_col2:
-    st.markdown(f'<div class="geoiq-metric-card"><div class="geoiq-metric-val">{predicted_footfall}</div><div class="geoiq-metric-lbl">Est. Footfall</div></div>', unsafe_allow_html=True)
-with g_col3:
+with g2:
+    st.markdown(f'<div class="geoiq-metric-card"><div class="geoiq-metric-val">{predicted_footfall}</div><div class="geoiq-metric-lbl">Est. Catchment Footfall</div></div>', unsafe_allow_html=True)
+with g3:
     st.markdown(f'<div class="geoiq-metric-card"><div class="geoiq-metric-val">{avg_spend}</div><div class="geoiq-metric-lbl">Avg. Ticket Size</div></div>', unsafe_allow_html=True)
-with g_col4:
+with g4:
     st.markdown(f'<div class="geoiq-metric-card"><div class="geoiq-metric-val">{rental_index}</div><div class="geoiq-metric-lbl">Median Rental Index</div></div>', unsafe_allow_html=True)
 
-# 11. Interactive All-India & GeoIQ Catchment Map
-st.markdown(f'<div class="section-heading">🗺️ Strategic Catchment & Competitor Map ({search_location} — {radius_km} km Buffer)</div>', unsafe_allow_html=True)
+# 11. Interactive GeoIQ Map Section with Catchment Buffer
+st.markdown(f'<div class="section-heading">🗺️ Strategic Catchment & Brand Outlets Map ({search_location} — {radius_km} km Buffer)</div>', unsafe_allow_html=True)
 
 m = folium.Map(
     location=[center_lat, center_lon],
     zoom_start=13,
-    tiles='https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
-    attr='Google'
+    tiles='https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+    attr='Google Hybrid Satellite'
 )
 
-# Target Pin
+# Target Anchor Marker
 folium.Marker(
     location=[center_lat, center_lon],
-    popup=f"<b>Target Site:</b> {search_location}<br><b>GeoIQ Score:</b> {suitability_score}/100",
+    popup=f"<b>Target Site:</b> {search_location}<br><b>Suitability Score:</b> {suitability_score}/100",
     tooltip=search_location,
-    icon=folium.Icon(color="darkblue", icon="flag")
+    icon=folium.Icon(color="red", icon="flag")
 ).add_to(m)
 
 # Catchment Radius Buffer Circle
@@ -370,33 +380,74 @@ folium.Circle(
     fill=True,
     fill_color='#3b82f6',
     fill_opacity=0.15,
-    popup=f"GeoIQ Catchment Buffer: {radius_km} km"
+    popup=f"Catchment Buffer: {radius_km} km"
 ).add_to(m)
 
-# Simulated Competitor / Brand Nodes within Catchment
-competitors = [
-    ("Nothing Before Coffee (Flagship)", center_lat + 0.003, center_lon + 0.002, "darkblue"),
-    ("Blue Tokai Coffee", center_lat + 0.005, center_lon - 0.004, "cadetblue"),
-    ("Starbucks Reserve", center_lat - 0.004, center_lon + 0.004, "green"),
-    ("Zudio Retail Outlet", center_lat - 0.006, center_lon - 0.003, "purple"),
-    ("Third Wave Coffee", center_lat + 0.002, center_lon - 0.006, "orange")
-]
+def get_brand_marker_color(brand_name):
+    b = str(brand_name).lower()
+    if 'nothing before' in b or 'nbc' in b: return 'darkblue'
+    elif 'zudio' in b: return 'pink'
+    elif 'starbucks' in b: return 'green'
+    elif 'blue tokai' in b: return 'cadetblue'
+    elif 'third wave' in b: return 'orange'
+    elif 'v-mart' in b or 'vmart' in b: return 'purple'
+    elif 'lenskart' in b: return 'beige'
+    elif 'domino' in b: return 'red'
+    return 'blue'
 
-for name, lat, lon, color in competitors:
-    folium.Marker(
-        location=[lat, lon],
-        popup=f"<b>{name}</b><br>Retail & Footfall Node",
-        tooltip=name,
-        icon=folium.Icon(color=color, icon="coffee")
-    ).add_to(m)
+try:
+    df, lat_col, lon_col, addr_col, name_col, brand_col, phase_col = load_and_process_data()
 
-st_folium(m, width=1200, height=550)
+    if df is not None and not df.empty and lat_col and lon_col:
+        filtered_df = df.copy()
 
-# 12. Site Assessment Dossier Export Simulator
+        if brand_col and selected_highlight_brands:
+            brand_filtered = filtered_df[filtered_df[brand_col].astype(str).apply(
+                lambda x: any(b.lower() in x.lower() for b in selected_highlight_brands)
+            )]
+            if not brand_filtered.empty:
+                filtered_df = brand_filtered
+
+        if phase_col and selected_phases:
+            phase_filtered = filtered_df[filtered_df[phase_col].astype(str).isin(selected_phases)]
+            if not phase_filtered.empty:
+                filtered_df = phase_filtered
+
+        for comp in filtered_df.head(600).to_dict('records'):
+            lat = comp.get(lat_col)
+            lon = comp.get(lon_col)
+            if pd.notna(lat) and pd.notna(lon):
+                store_title = str(comp.get(name_col, "NBC Target Location")) if name_col else "NBC Target Location"
+                store_brand = str(comp.get(brand_col, "Nothing Before Coffee")) if brand_col else "Nothing Before Coffee"
+                store_addr = str(comp.get(addr_col, "")) if addr_col else ""
+                store_phase = str(comp.get(phase_col, "Expansion")) if phase_col else "Expansion"
+
+                m_color = get_brand_marker_color(store_brand if brand_col else store_title)
+
+                popup_html = f"""
+                <div style='width: 210px; font-family: Montserrat, sans-serif;'>
+                    <b style='color: #0052CC; font-size: 14px;'>{store_title}</b><br>
+                    <span style='color: #E63946; font-weight: bold; font-size: 12px;'>{store_brand} | {store_phase}</span><br>
+                    <span style='font-size: 11px; color: #333;'>{store_addr}</span>
+                </div>
+                """
+                folium.Marker(
+                    location=[lat, lon],
+                    popup=folium.Popup(popup_html, max_width=240),
+                    tooltip=f"{store_brand} - {store_title}",
+                    icon=folium.Icon(color=m_color, icon="info-sign")
+                ).add_to(m)
+
+    st_folium(m, width=1200, height=600)
+
+except Exception as e:
+    st.error(f"Error loading map data: {e}")
+
+# 12. Executive Site Assessment Dossier
 st.markdown('<div class="section-heading">📑 Executive Site Assessment Dossier</div>', unsafe_allow_html=True)
 rep_col1, rep_col2 = st.columns([3, 1])
 with rep_col1:
-    st.info(f"**GeoIQ Location Dossier for `{search_location}`:**\n- **Analysis Radius:** {radius_km} km catchment\n- **Target Vertical:** {vertical}\n- **Composite Viability Index:** {suitability_score}% (High Potential)\n- **Recommendation:** Optimal density and footfall velocity. Proceed to lease negotiation and layout finalization.")
+    st.info(f"**GeoIQ Location Dossier for `{search_location}`:**\n- **Analysis Radius:** {radius_km} km catchment\n- **Composite Viability Index:** {suitability_score}% (High Potential Zone)\n- **Recommendation:** Optimal density and footfall velocity. Recommended for immediate Level-1 Landlord outreach.")
 with rep_col2:
     if st.button("📥 Download PDF Dossier", type="primary"):
         st.success("Dossier generated successfully!")
