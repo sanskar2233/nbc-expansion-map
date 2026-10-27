@@ -30,7 +30,6 @@ st.markdown("""
         font-family: 'Montserrat', sans-serif;
     }
 
-    /* Top Header & Bring on the Buzz Banner */
     .nbc-hero-wrapper {
         background: linear-gradient(180deg, #F4F8FB 0%, #FFFFFF 100%);
         border: 3px solid #0052CC;
@@ -56,7 +55,6 @@ st.markdown("""
         margin-bottom: 12px;
     }
 
-    /* Red Ticker Bar like NBC Website */
     .nbc-red-ticker {
         background-color: #E63946;
         color: #FFFFFF;
@@ -71,7 +69,6 @@ st.markdown("""
         margin-bottom: 20px;
     }
 
-    /* Unified BD Team Strip (Integrated right into the main dashboard) */
     .bd-team-banner {
         background-color: #0052CC;
         color: #FFFFFF;
@@ -105,7 +102,6 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.35);
     }
 
-    /* NBC Stats Counter Cards */
     .stat-card {
         background-color: #FFFFFF;
         border-bottom: 4px solid #0052CC;
@@ -129,7 +125,6 @@ st.markdown("""
         margin-top: 6px;
     }
 
-    /* GeoIQ Analytics Metric Cards */
     .geoiq-metric-card {
         background: #f8fafc;
         border: 2px solid #e2e8f0;
@@ -141,7 +136,6 @@ st.markdown("""
     .geoiq-metric-val { font-size: 26px; font-weight: 900; color: #0052CC; }
     .geoiq-metric-lbl { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-top: 4px; }
 
-    /* Founders Blue Story Section */
     .founders-story-box {
         background-color: #0052CC;
         color: #FFFFFF;
@@ -166,7 +160,6 @@ st.markdown("""
         color: #F0F4F8;
     }
 
-    /* Red Gallery Section Header */
     .section-heading {
         font-size: 26px;
         font-weight: 900;
@@ -296,7 +289,7 @@ with st.sidebar:
     st.image(NBC_LOGO, width=110)
     st.markdown("### 🌐 GeoIQ Spatial Intelligence")
     
-    # GeoIQ Search & Radius Controls
+    # Primary Search Bar in Sidebar + Quick City Selectors
     search_location = st.text_input("🔍 Search City / Area / Mall", value="Civil Lines, Prayagraj")
     radius_km = st.slider("📍 Catchment Radius Buffer (km)", min_value=0.5, max_value=5.0, value=1.5, step=0.5)
     
@@ -354,7 +347,7 @@ with g3:
 with g4:
     st.markdown(f'<div class="geoiq-metric-card"><div class="geoiq-metric-val">{rental_index}</div><div class="geoiq-metric-lbl">Median Rental Index</div></div>', unsafe_allow_html=True)
 
-# 11. Interactive GeoIQ Map Section with Catchment Buffer
+# 11. Interactive GeoIQ Map Section with In-Map Search Bar (Leaflet Search Plugin)
 st.markdown(f'<div class="section-heading">🗺️ Strategic Catchment & Brand Outlets Map ({search_location} — {radius_km} km Buffer)</div>', unsafe_allow_html=True)
 
 m = folium.Map(
@@ -413,6 +406,9 @@ try:
             if not phase_filtered.empty:
                 filtered_df = phase_filtered
 
+        # Group markers in a FeatureGroup so the Leaflet Search Bar can instantly find them
+        marker_cluster_group = folium.FeatureGroup(name="Store Locations")
+
         for comp in filtered_df.head(600).to_dict('records'):
             lat = comp.get(lat_col)
             lon = comp.get(lon_col)
@@ -431,12 +427,26 @@ try:
                     <span style='font-size: 11px; color: #333;'>{store_addr}</span>
                 </div>
                 """
-                folium.Marker(
+                marker = folium.Marker(
                     location=[lat, lon],
                     popup=folium.Popup(popup_html, max_width=240),
                     tooltip=f"{store_brand} - {store_title}",
                     icon=folium.Icon(color=m_color, icon="info-sign")
-                ).add_to(m)
+                )
+                marker.add_to(marker_cluster_group)
+
+        marker_cluster_group.add_to(m)
+
+        # Add Leaflet Search Plugin so users can type and search any store/pin right on the map
+        from folium.plugins import Search
+        Search(
+            layer=marker_cluster_group,
+            geom_type='Point',
+            placeholder='🔍 Search store or brand on map...',
+            collapsed=False,
+            search_zoom=16,
+            ôt_title='Search stores'
+        ).add_to(m)
 
     st_folium(m, width=1200, height=600)
 
